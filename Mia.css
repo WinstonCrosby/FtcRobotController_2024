@@ -1,0 +1,22 @@
+#container { text-align: center;
+			 border:3px solid purple;
+}
+head {background-color: #FFFFFF;
+	  color: #A32CC4;
+	  }
+body {background-color: #FFFFFF;
+	  }
+img { url(pictures/NewRobot.jpg );
+	}
+nav { float: left; 
+	  width: 100px;
+	  background-color: #FFFFFF;
+	  color: #A32CC4;
+}
+nav ul {background: #FFFFFF;
+		}
+main { font-size: 8pt;
+	   background-color: #EEEEEE;
+	   text-align: center; 
+	  }
+

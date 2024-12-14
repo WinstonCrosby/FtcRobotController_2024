@@ -36,6 +36,14 @@ public class teleop_v2 extends OpMode {
     float desArmPosition;
     float prevArmError = 0;
 
+    //Define Wheel Speed Vals
+    float x = 0;
+    float y = 0;
+    float t = 0;
+
+    //Define Control Mode
+    int ControlMode = 0;
+
     //initialize
     @Override
     public void init() {
@@ -69,9 +77,25 @@ public class teleop_v2 extends OpMode {
         //-------------------------Input Block--------------------------------//
         //-------------------Read all inputs in here--------------------------//
         //--------------------------------------------------------------------//
-        float x = gamepad1.left_stick_x/2;
-        float y = gamepad1.left_stick_y/2;
-        float t = gamepad1.right_stick_x/2;
+        if(gamepad1.start){
+            if (ControlMode == 0){
+                ControlMode = 1;
+            }
+            else if (ControlMode == 1){
+                ControlMode = 0;
+            }
+        }
+        telemetry.addData("Mode", ControlMode);
+        if (ArmMotor.getCurrentPosition() > 1500){
+            x = gamepad1.left_stick_x/4;
+            y = gamepad1.left_stick_y/4;
+            t = gamepad1.right_stick_x/4;
+        }
+        else {
+            x = gamepad1.left_stick_x / 2;
+            y = gamepad1.left_stick_y / 2;
+            t = gamepad1.right_stick_x / 2;
+        }
 
         float ea = -gamepad2.right_stick_y/2;
 
@@ -88,16 +112,22 @@ public class teleop_v2 extends OpMode {
             ArmMotor.setPower(0);
         }*/
 
-        if(gamepad2.a){
+
+        if(gamepad1.a){
             desArmPosition = armLow;
         }
-        else if(gamepad2.b){
+        /*else if(gamepad1.b){
             desArmPosition = armMed;
+        }*/
+        else if(gamepad1.y){
+            if (ControlMode == 0) {
+                desArmPosition = armHigh;
+            }
+            else if (ControlMode == 1){
+                desArmPosition = armMed;
+            }
         }
-        else if(gamepad2.y){
-            desArmPosition = armHigh;
-        }
-        else if(gamepad2.x){
+        else if(gamepad1.x){
             desArmPosition = armHang;
         }
 
@@ -111,18 +141,19 @@ public class teleop_v2 extends OpMode {
         prevArmError = Arm(desArmPosition, currentArmPosition, prevArmError);
 
         //Function used to extend or retract the arm
-        //Extend();
+        Extend();
 
         //NewExtend();
-        //Grabber();
+        Grabber();
 
         //If B button held, make grabber spit out
-        if (gamepad2.dpad_right)
+        if (gamepad1.dpad_right)
         {
             wrist.setPosition(0.39);
         }
 
-        if (gamepad2.dpad_left)
+
+        if (gamepad1.dpad_left)
         {
             wrist.setPosition(0.74);
         }
@@ -154,7 +185,7 @@ public class teleop_v2 extends OpMode {
         double motorPower = (kp * error) + (kd * error_d);
 
         //Set motor power
-        ArmMotor.setPower(motorPower);
+            ArmMotor.setPower(motorPower);
 
         //Print motor power
         telemetry.addData("Arm Value", ArmMotor.getCurrentPosition());
@@ -200,14 +231,22 @@ public class teleop_v2 extends OpMode {
         double inVal = 0;
         double lenVal = ExtendArm.getCurrentPosition();
 
-        if(gamepad2.dpad_up){
-            wanVal = outVal;
+        if(gamepad1.dpad_up){
+            //wanVal = outVal;
+            if (ExtendArm.getCurrentPosition() > -1310){
+                ExtendArm.setPower(-1);
+            }
         }
-
-        if(gamepad2.dpad_down){
-            wanVal = inVal;
+        else if(gamepad1.dpad_down){
+            //wanVal = inVal;
+            if(ExtendArm.getCurrentPosition() < 0){
+                ExtendArm.setPower(1);
+            }
         }
-        double extend = wanVal - lenVal;
+        else {
+            ExtendArm.setPower(0);
+        }
+        /*double extend = wanVal - lenVal;
 
         double p = 0.01;
         double d = 0.01;
@@ -219,17 +258,17 @@ public class teleop_v2 extends OpMode {
         double move = (p * extP) + (d * extD);
         ExtendArm.setPower(move);
         lenVal = ExtendArm.getCurrentPosition();
-        telemetry.addData("Extend Value", lenVal);
+        telemetry.addData("Extend Value", lenVal);*/
     }
 
     public void NewExtend(){
         if(0 < ExtendArm.getCurrentPosition()){
-            if (gamepad2.dpad_down){
+            if (gamepad1.dpad_down){
                 //ExtendArm.setPower(0.01);
             }
         }
         if (10 > ExtendArm.getCurrentPosition()){
-            if (gamepad2.dpad_up){
+            if (gamepad1.dpad_up){
                 //ExtendArm.setPower(-0.01);
             }
         }
@@ -239,10 +278,10 @@ public class teleop_v2 extends OpMode {
     }
 
     public void Grabber() {
-        if(gamepad2.x) {
+        if(gamepad1.right_bumper) {
             grabber.setPower(-1);
         }
-        if(gamepad2.b){
+        else if(gamepad1.left_bumper){
             grabber.setPower(1);
         }
         else{

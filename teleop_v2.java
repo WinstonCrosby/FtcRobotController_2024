@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 
 @TeleOp(name = "TeleOp")
 public class teleop_v2 extends OpMode {
@@ -20,6 +21,9 @@ public class teleop_v2 extends OpMode {
     CRServo grabber;
     Servo wrist;
 
+    TouchSensor ResetExtend;
+    float PrevButton;
+
     double desVal = 0;
     double wanVal = 0;
 
@@ -27,13 +31,16 @@ public class teleop_v2 extends OpMode {
 
     //Define set arm positions
     float armLow = 0;
+    float armGrab = 800;
     float armMed = 1750;
     float armHigh = 2100;
     float armHang = 3000;
 
+    int Height = 0;
+
     //Define variables for current arm position and desired arm position
     float currentArmPosition;
-    float desArmPosition;
+    float desArmPosition = 0;
     float prevArmError = 0;
 
     //Define Wheel Speed Vals
@@ -43,6 +50,9 @@ public class teleop_v2 extends OpMode {
 
     //Define Control Mode
     int ControlMode = 0;
+
+    //Define flag for incrementing arm mode
+    boolean armChange = true;
 
     //initialize
     @Override
@@ -59,14 +69,13 @@ public class teleop_v2 extends OpMode {
 
         grabber = hardwareMap.get(CRServo.class, "grabber");
         wrist = hardwareMap.get(Servo.class, "wrist");
+        ResetExtend = hardwareMap.get(TouchSensor.class, "ResetExtend");
 
         telemetry.addData("Hardware", "much gud");
     }
 
     @Override
-    public void start() {
-        wrist.setPosition(0.39);
-    }
+    public void start() { wrist.setPosition(0.39); }
 
 
     //loop start
@@ -77,7 +86,7 @@ public class teleop_v2 extends OpMode {
         //-------------------------Input Block--------------------------------//
         //-------------------Read all inputs in here--------------------------//
         //--------------------------------------------------------------------//
-        if(gamepad1.start){
+        /*if(gamepad2.start){
             if (ControlMode == 0){
                 ControlMode = 1;
             }
@@ -85,7 +94,23 @@ public class teleop_v2 extends OpMode {
                 ControlMode = 0;
             }
         }
-        telemetry.addData("Mode", ControlMode);
+        telemetry.addData("Mode", ControlMode);*/
+        if (gamepad2.y && armChange && Height < 4){
+            Height += 1;
+            armChange = false;
+        }
+        else if(gamepad2.a && armChange && Height > 0){
+            Height -= 1;
+            armChange = false;
+        }
+        else if(!gamepad2.a && !gamepad2.y)
+        {
+            armChange = true;
+        }
+
+        //Check height
+        telemetry.addData("Arm Height Mode", Height);
+
         if (ArmMotor.getCurrentPosition() > 1500){
             x = gamepad1.left_stick_x/4;
             y = gamepad1.left_stick_y/4;
@@ -101,6 +126,19 @@ public class teleop_v2 extends OpMode {
 
         //Check current arm position
         currentArmPosition = ArmMotor.getCurrentPosition();
+
+
+        if (ResetExtend.isPressed()){
+            ExtendArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            PrevButton = 1;
+        }
+        else {
+            ExtendArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            PrevButton = 0;
+        }
+        telemetry.addData("Sensor", ResetExtend.isPressed());
+
+
         //--------------------------------------------------------------------//
         //-------------------------End Input Block----------------------------//
         //--------------------------------------------------------------------//
@@ -113,29 +151,63 @@ public class teleop_v2 extends OpMode {
         }*/
 
 
-        if(gamepad1.a){
+        /*if(gamepad2.a){
             desArmPosition = armLow;
         }
-        /*else if(gamepad1.b){
+        else if(gamepad2.b){
             desArmPosition = armMed;
-        }*/
-        else if(gamepad1.y){
+        }
+        else if(gamepad2.y){
+            desArmPosition = armHigh;
+        }
+        else if(gamepad2.x){
             if (ControlMode == 0) {
-                desArmPosition = armHigh;
+                desArmPosition = armGrab;
             }
             else if (ControlMode == 1){
-                desArmPosition = armMed;
+                desArmPosition = armHang;
             }
-        }
-        else if(gamepad1.x){
-            desArmPosition = armHang;
-        }
+        }*/
 
 
 
         //Function used to move the robot
         Drive(x, y, t);
 
+        // Switch Arm Height (maybe)
+        switch (Height)
+        {
+            case 0:
+            {
+                desArmPosition = armLow;
+                telemetry.addData("Arm Value", "Arm is Down");
+                break;
+            }
+            case 1:
+            {
+                desArmPosition = armGrab;
+                telemetry.addData("Arm Value", "Arm is Grabbing");
+                break;
+            }
+            case 2:
+            {
+                desArmPosition = armMed;
+                telemetry.addData("Arm Value", "Arm is at Low Basket");
+                break;
+            }
+            case 3:
+            {
+                desArmPosition = armHigh;
+                telemetry.addData("Arm Value", "Arm is at High Basket");
+                break;
+            }
+            case 4:
+            {
+                desArmPosition = armHang;
+                telemetry.addData("Arm Value", "Arm is in Hang Position");
+                break;
+            }
+        }
         //Function used to control the angle of the arm
         //Returns the previous error so that the variable is not overwritten every iteration
         prevArmError = Arm(desArmPosition, currentArmPosition, prevArmError);
@@ -147,13 +219,13 @@ public class teleop_v2 extends OpMode {
         Grabber();
 
         //If B button held, make grabber spit out
-        if (gamepad1.dpad_right)
+        if (gamepad2.dpad_right)
         {
             wrist.setPosition(0.39);
         }
 
 
-        if (gamepad1.dpad_left)
+        if (gamepad2.dpad_left)
         {
             wrist.setPosition(0.74);
         }
@@ -231,21 +303,28 @@ public class teleop_v2 extends OpMode {
         double inVal = 0;
         double lenVal = ExtendArm.getCurrentPosition();
 
-        if(gamepad1.dpad_up){
+        if(gamepad2.dpad_up){
             //wanVal = outVal;
             if (ExtendArm.getCurrentPosition() > -1310){
                 ExtendArm.setPower(-1);
             }
+            else{
+                ExtendArm.setPower(0);
+            }
         }
-        else if(gamepad1.dpad_down){
+        else if(gamepad2.dpad_down){
             //wanVal = inVal;
             if(ExtendArm.getCurrentPosition() < 0){
                 ExtendArm.setPower(1);
+            }
+            else{
+                ExtendArm.setPower(0);
             }
         }
         else {
             ExtendArm.setPower(0);
         }
+        telemetry.addData("Extend Value", ExtendArm.getCurrentPosition());
         /*double extend = wanVal - lenVal;
 
         double p = 0.01;
@@ -261,27 +340,11 @@ public class teleop_v2 extends OpMode {
         telemetry.addData("Extend Value", lenVal);*/
     }
 
-    public void NewExtend(){
-        if(0 < ExtendArm.getCurrentPosition()){
-            if (gamepad1.dpad_down){
-                //ExtendArm.setPower(0.01);
-            }
-        }
-        if (10 > ExtendArm.getCurrentPosition()){
-            if (gamepad1.dpad_up){
-                //ExtendArm.setPower(-0.01);
-            }
-        }
-        else {
-            ExtendArm.setPower(0);
-        }
-    }
-
     public void Grabber() {
-        if(gamepad1.right_bumper) {
+        if(gamepad2.right_bumper) {
             grabber.setPower(-1);
         }
-        else if(gamepad1.left_bumper){
+        else if(gamepad2.left_bumper){
             grabber.setPower(1);
         }
         else{

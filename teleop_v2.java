@@ -86,20 +86,15 @@ public class teleop_v2 extends OpMode {
         //-------------------------Input Block--------------------------------//
         //-------------------Read all inputs in here--------------------------//
         //--------------------------------------------------------------------//
-        /*if(gamepad2.start){
-            if (ControlMode == 0){
-                ControlMode = 1;
-            }
-            else if (ControlMode == 1){
-                ControlMode = 0;
-            }
-        }
-        telemetry.addData("Mode", ControlMode);*/
-        if (gamepad2.y && armChange && Height < 4){
+        
+        //Increase or decrease height switch
+        if (gamepad2.y && armChange && Height < 4)
+        {
             Height += 1;
             armChange = false;
         }
-        else if(gamepad2.a && armChange && Height > 0){
+        else if(gamepad2.a && armChange && Height > 0)
+        {
             Height -= 1;
             armChange = false;
         }
@@ -108,68 +103,43 @@ public class teleop_v2 extends OpMode {
             armChange = true;
         }
 
-        //Check height
+        //Report height
         telemetry.addData("Arm Height Mode", Height);
 
-        if (ArmMotor.getCurrentPosition() > 1500){
+        //Slow down wheel speed if arm is raised
+        if (ArmMotor.getCurrentPosition() > 1500)
+        {
             x = gamepad1.left_stick_x/4;
             y = gamepad1.left_stick_y/4;
             t = gamepad1.right_stick_x/4;
         }
-        else {
+        else 
+        {
             x = gamepad1.left_stick_x / 2;
             y = gamepad1.left_stick_y / 2;
             t = gamepad1.right_stick_x / 2;
         }
 
-        float ea = -gamepad2.right_stick_y/2;
-
         //Check current arm position
         currentArmPosition = ArmMotor.getCurrentPosition();
 
-
-        if (ResetExtend.isPressed()){
+        //If reset button is pressed reset encoder value
+        if (ResetExtend.isPressed())
+        {
             ExtendArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             PrevButton = 1;
         }
-        else {
+        else 
+        {
             ExtendArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             PrevButton = 0;
         }
+        
         telemetry.addData("Sensor", ResetExtend.isPressed());
-
 
         //--------------------------------------------------------------------//
         //-------------------------End Input Block----------------------------//
         //--------------------------------------------------------------------//
-
-        //desArmPosition -= gamepad2.right_stick_y*5;
-        /*
-        if (gamepad2.a){
-            desArmPosition = 0;
-            ArmMotor.setPower(0);
-        }*/
-
-
-        /*if(gamepad2.a){
-            desArmPosition = armLow;
-        }
-        else if(gamepad2.b){
-            desArmPosition = armMed;
-        }
-        else if(gamepad2.y){
-            desArmPosition = armHigh;
-        }
-        else if(gamepad2.x){
-            if (ControlMode == 0) {
-                desArmPosition = armGrab;
-            }
-            else if (ControlMode == 1){
-                desArmPosition = armHang;
-            }
-        }*/
-
-
 
         //Function used to move the robot
         Drive(x, y, t);
@@ -218,12 +188,10 @@ public class teleop_v2 extends OpMode {
         //NewExtend();
         Grabber();
 
-        //If B button held, make grabber spit out
         if (gamepad2.dpad_right)
         {
             wrist.setPosition(0.39);
         }
-
 
         if (gamepad2.dpad_left)
         {
@@ -264,90 +232,56 @@ public class teleop_v2 extends OpMode {
 
 
         return error;
-
-        /*
-        if (ArmMotor.getCurrentPosition() >= -10){
-            if (ArmMotor.getCurrentPosition() < 3000) {
-                ArmMotor.setPower(ea);
-            }
-        }
-        double mvVal = ArmMotor.getCurrentPosition();
-        double eror = dsVal - mvVal;*/
-
-        /*
-        if (ea != 0){
-            dsVal = ArmMotor.getCurrentPosition();
-        }
-        if (gamepad2.a){
-            ArmMotor.setPower(0);
-            dsVal = ArmMotor.getCurrentPosition();
-        }
-        if (!gamepad2.a) {
-            if (ea == 0) {
-                double op = 0.0005;
-                double od = 0.0005;
-
-                double errod = eror - prevEr;
-                prevEr = eror;
-                double errop = eror;
-
-                double Go = (op * errop) + (od * errod);
-                ArmMotor.setPower(Go);
-                mvVal = ArmMotor.getCurrentPosition();
-                telemetry.addData("Arm Value", ArmMotor.getCurrentPosition());
-            }
-        }*/
     }
-    public void Extend(){
+    
+    public void Extend()
+    {
         double outVal = -1310;
         double inVal = 0;
         double lenVal = ExtendArm.getCurrentPosition();
 
-        if(gamepad2.dpad_up){
-            //wanVal = outVal;
-            if (ExtendArm.getCurrentPosition() > -1310){
+        //Extend the arm while the up button is pressed, retract while down button is pressed
+        if(gamepad2.dpad_up)
+        {
+            if (ExtendArm.getCurrentPosition() > -1310)
+            {
                 ExtendArm.setPower(-1);
             }
             else{
                 ExtendArm.setPower(0);
             }
         }
-        else if(gamepad2.dpad_down){
-            //wanVal = inVal;
-            if(ExtendArm.getCurrentPosition() < 0){
+        else if(gamepad2.dpad_down)
+        {
+            if(ExtendArm.getCurrentPosition() < 0)
+            {
                 ExtendArm.setPower(1);
             }
-            else{
+            else
+            {
                 ExtendArm.setPower(0);
             }
         }
-        else {
+        else 
+        {
             ExtendArm.setPower(0);
         }
         telemetry.addData("Extend Value", ExtendArm.getCurrentPosition());
-        /*double extend = wanVal - lenVal;
-
-        double p = 0.01;
-        double d = 0.01;
-
-        double extD = extend - prevExt;
-        prevExt = extend;
-        double extP = extend;
-
-        double move = (p * extP) + (d * extD);
-        ExtendArm.setPower(move);
-        lenVal = ExtendArm.getCurrentPosition();
-        telemetry.addData("Extend Value", lenVal);*/
     }
 
-    public void Grabber() {
-        if(gamepad2.right_bumper) {
+    public void Grabber() 
+    {
+        //Intake with right bumper, output with left bumper
+        if(gamepad2.right_bumper) 
+        {
             grabber.setPower(-1);
         }
-        else if(gamepad2.left_bumper){
+        else if(gamepad2.left_bumper)
+        {
             grabber.setPower(1);
         }
-        else{
+        else
+        {
             grabber.setPower(0);
         }
     }

@@ -39,7 +39,7 @@ public class teleop_v2 extends OpMode {
     //Define extension limits
     double limitLow = -100;
     double limitMid = -1300;
-    double limitHight = -100;
+    double limitHigh = -100;
 
     int Height = 0;
 

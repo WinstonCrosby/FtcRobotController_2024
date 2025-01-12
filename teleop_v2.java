@@ -36,6 +36,11 @@ public class teleop_v2 extends OpMode {
     float armHigh = 2100;
     float armHang = 3000;
 
+    //Define extension limits
+    double limitLow = -100;
+    double limitMid = -1300;
+    double limitHight = -100;
+
     int Height = 0;
 
     //Define variables for current arm position and desired arm position
@@ -151,30 +156,40 @@ public class teleop_v2 extends OpMode {
             {
                 desArmPosition = armLow;
                 telemetry.addData("Arm Value", "Arm is Down");
+
+                Extend(limitLow);
                 break;
             }
             case 1:
             {
                 desArmPosition = armGrab;
                 telemetry.addData("Arm Value", "Arm is Grabbing");
+
+                Extend(limitLow);
                 break;
             }
             case 2:
             {
                 desArmPosition = armMed;
                 telemetry.addData("Arm Value", "Arm is at Low Basket");
+
+                Extend(limitLow);
                 break;
             }
             case 3:
             {
                 desArmPosition = armHigh;
                 telemetry.addData("Arm Value", "Arm is at High Basket");
+
+                Extend(limitMid);
                 break;
             }
             case 4:
             {
                 desArmPosition = armHang;
                 telemetry.addData("Arm Value", "Arm is in Hang Position");
+
+                Extend(limitHigh);
                 break;
             }
         }
@@ -182,10 +197,6 @@ public class teleop_v2 extends OpMode {
         //Returns the previous error so that the variable is not overwritten every iteration
         prevArmError = Arm(desArmPosition, currentArmPosition, prevArmError);
 
-        //Function used to extend or retract the arm
-        Extend();
-
-        //NewExtend();
         Grabber();
 
         if (gamepad2.dpad_right)
@@ -225,7 +236,7 @@ public class teleop_v2 extends OpMode {
         double motorPower = (kp * error) + (kd * error_d);
 
         //Set motor power
-            ArmMotor.setPower(motorPower);
+        ArmMotor.setPower(motorPower);
 
         //Print motor power
         telemetry.addData("Arm Value", ArmMotor.getCurrentPosition());
@@ -234,16 +245,15 @@ public class teleop_v2 extends OpMode {
         return error;
     }
     
-    public void Extend()
+    public void Extend(double extendLimit)
     {
-        double outVal = -1310;
         double inVal = 0;
         double lenVal = ExtendArm.getCurrentPosition();
 
         //Extend the arm while the up button is pressed, retract while down button is pressed
         if(gamepad2.dpad_up)
         {
-            if (ExtendArm.getCurrentPosition() > -1310)
+            if (lenVal > extendLimit)
             {
                 ExtendArm.setPower(-1);
             }
@@ -253,7 +263,7 @@ public class teleop_v2 extends OpMode {
         }
         else if(gamepad2.dpad_down)
         {
-            if(ExtendArm.getCurrentPosition() < 0)
+            if(lenVal < inVal)
             {
                 ExtendArm.setPower(1);
             }
@@ -266,7 +276,7 @@ public class teleop_v2 extends OpMode {
         {
             ExtendArm.setPower(0);
         }
-        telemetry.addData("Extend Value", ExtendArm.getCurrentPosition());
+        telemetry.addData("Extend Value", lenVal);
     }
 
     public void Grabber() 

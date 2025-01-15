@@ -1,16 +1,25 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 import java.lang.Math;
 
 @TeleOp(name = "TeleOp")
-public class teleop_v2 extends OpMode {
+public class teleop_global extends OpMode {
+
+    public IMU imu;
+
     //name motors
     DcMotor motorFL;
     DcMotor motorFR;
@@ -63,6 +72,13 @@ public class teleop_v2 extends OpMode {
     //initialize
     @Override
     public void init() {
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        imu.initialize(
+                new IMU.Parameters(new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                                                                RevHubOrientationOnRobot.UsbFacingDirection.LEFT))
+        );
+
         motorFL = hardwareMap.get(DcMotor.class, "motorFL");
         motorFR = hardwareMap.get(DcMotor.class, "motorFR");
         motorBL = hardwareMap.get(DcMotor.class, "motorBL");
@@ -76,18 +92,6 @@ public class teleop_v2 extends OpMode {
         grabber = hardwareMap.get(CRServo.class, "grabber");
         wrist = hardwareMap.get(Servo.class, "wrist");
         ResetExtend = hardwareMap.get(TouchSensor.class, "ResetExtend");
-
-        // Create an object to receive the IMU angles
-        YawPitchRollAngles robotOrientation;
-        robotOrientation = imu.getRobotYawPitchRollAngles();
-
-        // Now use these simple methods to extract each angle
-        // (Java type double) from the object you just created:
-        double Yaw   = robotOrientation.getYaw(AngleUnit.DEGREES);
-        double Pitch = robotOrientation.getPitch(AngleUnit.DEGREES);
-        double Roll  = robotOrientation.getRoll(AngleUnit.DEGREES);
-
-        initial_Yaw = Yaw;
 
         telemetry.addData("Hardware", "much gud");
     }
@@ -104,15 +108,7 @@ public class teleop_v2 extends OpMode {
         //-------------------------Input Block--------------------------------//
         //-------------------Read all inputs in here--------------------------//
         //--------------------------------------------------------------------//
-        /*if(gamepad2.start){
-            if (ControlMode == 0){
-                ControlMode = 1;
-            }
-            else if (ControlMode == 1){
-                ControlMode = 0;
-            }
-        }
-        telemetry.addData("Mode", ControlMode);*/
+
         if (gamepad2.y && armChange && Height < 4){
             Height += 1;
             armChange = false;
@@ -156,50 +152,22 @@ public class teleop_v2 extends OpMode {
         }
         telemetry.addData("Sensor", ResetExtend.isPressed());
 
-        robotOrientation = imu.getRobotYawPitchRollAngles();
+        double Yaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        float Yaw_mod = (float)Yaw;
 
-        // Now use these simple methods to extract each angle
-        // (Java type double) from the object you just created:
-        double Yaw   = robotOrientation.getYaw(AngleUnit.DEGREES);
-
-        real_Yaw = Yaw - initial_Yaw;
+        telemetry.addData("IMU Angle", Yaw);
+        telemetry.addData("Modified Angle", Yaw_mod);
 
         //--------------------------------------------------------------------//
         //-------------------------End Input Block----------------------------//
         //--------------------------------------------------------------------//
 
-        //desArmPosition -= gamepad2.right_stick_y*5;
-        /*
-        if (gamepad2.a){
-            desArmPosition = 0;
-            ArmMotor.setPower(0);
-        }*/
-
-
-        /*if(gamepad2.a){
-            desArmPosition = armLow;
-        }
-        else if(gamepad2.b){
-            desArmPosition = armMed;
-        }
-        else if(gamepad2.y){
-            desArmPosition = armHigh;
-        }
-        else if(gamepad2.x){
-            if (ControlMode == 0) {
-                desArmPosition = armGrab;
-            }
-            else if (ControlMode == 1){
-                desArmPosition = armHang;
-            }
-        }*/
-
         //Modify x and y inputs to be globally referenced
-        x = Math.cos(real_Yaw) * x;
-        y = Math.sin(real_Yaw) * y;
+        float x_mod = (float)Math.cos(Math.toRadians(Yaw_mod)) * x;
+        float y_mod = (float)Math.sin(Math.toRadians(Yaw_mod)) * y;
 
         //Function used to move the robot
-        Drive(x, y, t);
+        Drive(x_mod, y_mod, t);
 
         // Switch Arm Height (maybe)
         switch (Height)

@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -11,7 +10,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 import java.lang.Math;
 
@@ -72,6 +70,7 @@ public class teleop_global extends OpMode {
     //initialize
     @Override
     public void init() {
+        //Define and initialize the IMU
         imu = hardwareMap.get(IMU.class, "imu");
 
         imu.initialize(
@@ -152,7 +151,7 @@ public class teleop_global extends OpMode {
         }
         telemetry.addData("Sensor", ResetExtend.isPressed());
 
-        double Yaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        double Yaw = -imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
         float Yaw_mod = (float)Yaw;
 
         telemetry.addData("IMU Angle", Yaw);
@@ -163,8 +162,8 @@ public class teleop_global extends OpMode {
         //--------------------------------------------------------------------//
 
         //Modify x and y inputs to be globally referenced
-        float x_mod = (float)Math.cos(Math.toRadians(Yaw_mod)) * x;
-        float y_mod = (float)Math.sin(Math.toRadians(Yaw_mod)) * y;
+        float x_mod = -y * (float)Math.sin(Yaw_mod) + x * (float)Math.cos(Yaw_mod);
+        float y_mod = y * (float)Math.cos(Yaw_mod) + x * (float)Math.sin(Yaw_mod);
 
         //Function used to move the robot
         Drive(x_mod, y_mod, t);

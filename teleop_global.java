@@ -10,6 +10,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+
+import java.util.concurrent.TimeUnit;
 
 import java.lang.Math;
 
@@ -101,9 +104,8 @@ public class teleop_global extends OpMode {
 
     //loop start
     @Override
-    public void loop () {
-
-
+    public void loop () 
+    {
         //-------------------------Input Block--------------------------------//
         //-------------------Read all inputs in here--------------------------//
         //--------------------------------------------------------------------//
@@ -124,12 +126,14 @@ public class teleop_global extends OpMode {
         //Check height
         telemetry.addData("Arm Height Mode", Height);
 
-        if (ArmMotor.getCurrentPosition() > 1500){
+        if (ArmMotor.getCurrentPosition() > 1500)
+        {
             x = gamepad1.left_stick_x/4;
             y = gamepad1.left_stick_y/4;
             t = gamepad1.right_stick_x/4;
         }
-        else {
+        else 
+        {
             x = gamepad1.left_stick_x / 2;
             y = gamepad1.left_stick_y / 2;
             t = gamepad1.right_stick_x / 2;
@@ -141,21 +145,25 @@ public class teleop_global extends OpMode {
         currentArmPosition = ArmMotor.getCurrentPosition();
 
 
-        if (ResetExtend.isPressed()){
+        if (ResetExtend.isPressed())
+        {
             ExtendArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             PrevButton = 1;
         }
-        else {
+        else 
+        {
             ExtendArm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             PrevButton = 0;
         }
         telemetry.addData("Sensor", ResetExtend.isPressed());
 
+        if (gamepad1.dpad_up)
+        {
+            imu.resetYaw();
+        }
+
         double Yaw = -imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
         float Yaw_mod = (float)Yaw;
-
-        telemetry.addData("IMU Angle", Yaw);
-        telemetry.addData("Modified Angle", Yaw_mod);
 
         //--------------------------------------------------------------------//
         //-------------------------End Input Block----------------------------//
@@ -259,38 +267,6 @@ public class teleop_global extends OpMode {
 
         return error;
 
-        /*
-        if (ArmMotor.getCurrentPosition() >= -10){
-            if (ArmMotor.getCurrentPosition() < 3000) {
-                ArmMotor.setPower(ea);
-            }
-        }
-        double mvVal = ArmMotor.getCurrentPosition();
-        double eror = dsVal - mvVal;*/
-
-        /*
-        if (ea != 0){
-            dsVal = ArmMotor.getCurrentPosition();
-        }
-        if (gamepad2.a){
-            ArmMotor.setPower(0);
-            dsVal = ArmMotor.getCurrentPosition();
-        }
-        if (!gamepad2.a) {
-            if (ea == 0) {
-                double op = 0.0005;
-                double od = 0.0005;
-
-                double errod = eror - prevEr;
-                prevEr = eror;
-                double errop = eror;
-
-                double Go = (op * errop) + (od * errod);
-                ArmMotor.setPower(Go);
-                mvVal = ArmMotor.getCurrentPosition();
-                telemetry.addData("Arm Value", ArmMotor.getCurrentPosition());
-            }
-        }*/
     }
     public void Extend(){
         double outVal = -1310;
